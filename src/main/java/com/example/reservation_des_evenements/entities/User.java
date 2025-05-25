@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-@lombok.Data
+
 @Entity
 @Table(name = "user")
 public class User implements UserDetails {
