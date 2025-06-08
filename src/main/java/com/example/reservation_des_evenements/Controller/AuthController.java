@@ -1,40 +1,32 @@
 package com.example.reservation_des_evenements.Controller;
-import com.example.reservation_des_evenements.Configuration.JwtUtils;
+
 import com.example.reservation_des_evenements.Repositories.UserRepositorie;
+import com.example.reservation_des_evenements.Services.UserService;
+import com.example.reservation_des_evenements.Controller.LoginResponse;
 import com.example.reservation_des_evenements.entities.User;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.core.AuthenticationException;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
-    private final JwtUtils jwtUtils;
     private final UserRepositorie userRepositorie;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-@Autowired
-    public AuthController(JwtUtils jwtUtils, UserRepositorie userRepositorie, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
-        this.jwtUtils = jwtUtils;
+    private final UserService userService;
+
+    public AuthController(UserRepositorie userRepositorie, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserService userService) {
         this.userRepositorie = userRepositorie;
-    this.passwordEncoder = passwordEncoder;
-    this.authenticationManager = authenticationManager;
-}
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.userService = userService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -46,39 +38,23 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
-        String username = loginRequest.get("username");
-        String password = loginRequest.get("password");
-
-        log.info("Login attempt for username: {}", username);
-
-        if (username == null || password == null) {
-            log.error("Username or password is null");
-            return ResponseEntity.badRequest().body("Username and password are required");
-        }
-
+    public ResponseEntity<?> loginUser(@RequestBody User user) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
             );
 
-            if (authentication.isAuthenticated()) {
-                String token = jwtUtils.generateToken(username);
+            // Simule un token, tu peux remplacer ça par une vraie génération JWT
+            String fakeToken = "mocked-jwt-token";
 
-                Map<String, Object> authData = new HashMap<>();
-                authData.put("token", token);
-                authData.put("type", "Bearer");
-
-                log.info("Login successful for username: {}", username);
-                return ResponseEntity.ok(authData);
-            }
-
-            log.warn("Authentication failed for username: {}", username);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
-
-        } catch (AuthenticationException e) {
-            log.error("Authentication exception for username {}: {}", username, e.getMessage());
+            return ResponseEntity.ok(new LoginResponse(fakeToken));
+        } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
+    }
+
+    @GetMapping("/countUser")
+    public int countUser() {
+        return userService.allUser();
     }
 }
